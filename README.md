@@ -57,49 +57,49 @@ Sample Outputs
 
 `GET /hits`
 
-  {
-    status: "OK",
-    all_time: {
-      http://www.olark.com/: "123850",
-      http://www.olark.com/about.html: "50558",
-      http://www.olark.com/features.html: "27024"
-    },
-    last_month: {
-      http://www.olark.com/: "123850",
-      http://www.olark.com/about.html: "50558",
-      http://www.olark.com/features.html: "27024"
-    },
-    last_week: {
-      http://www.olark.com/: "79277",
-      http://www.olark.com/about.html: "50558",
-      http://www.olark.com/features.html: "27024"
-    },
-    last_day: {
-      http://www.olark.com/: "123850",
-      http://www.olark.com/about.html: "50558",
-      http://www.olark.com/features.html: "27024"
-    },
-    last_hour: {
-      http://www.olark.com/: "44573"
-    },
-    last_minute: { }
-  }
+    {
+      status: "OK",
+      all_time: {
+        http://www.olark.com/: "123850",
+        http://www.olark.com/about.html: "50558",
+        http://www.olark.com/features.html: "27024"
+      },
+      last_month: {
+        http://www.olark.com/: "123850",
+        http://www.olark.com/about.html: "50558",
+        http://www.olark.com/features.html: "27024"
+      },
+      last_week: {
+        http://www.olark.com/: "79277",
+        http://www.olark.com/about.html: "50558",
+        http://www.olark.com/features.html: "27024"
+      },
+      last_day: {
+        http://www.olark.com/: "123850",
+        http://www.olark.com/about.html: "50558",
+        http://www.olark.com/features.html: "27024"
+      },
+      last_hour: {
+        http://www.olark.com/: "44573"
+      },
+      last_minute: { }
+    }
 
 
 `GET /hit?url=http%3A%2F%2Fwww.olark.com%2F`
 
-  {
-    status: "OK",
-    url: "http://www.olark.com/",
-    all_time: "123850",
-    last_month: "123850",
-    last_week: "79277",
-    last_day: "123850",
-    last_hour: "44573",
-    last_minute: 0
-  }
+    {
+      status: "OK",
+      url: "http://www.olark.com/",
+      all_time: "123850",
+      last_month: "123850",
+      last_week: "79277",
+      last_day: "123850",
+      last_hour: "44573",
+      last_minute: 0
+    }
 
 
 `POST /hit` (`url=http%3A%2F%2Fwww.olark.com%2F&timestamp=0`)
 
-  { status: "OK" }
+    { status: "OK" }
