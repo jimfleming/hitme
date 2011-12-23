@@ -60,7 +60,7 @@ Results
   * tornado: -n 10000 -c > 8192
   * tornado-non: -n 10000 -c > 256
   * threaded: -n 10000 -c <= 4096, > 2048 (run locally, so can't compare)
-* How many requests a second can each implementation handle? (1 visitor / many)
+* How many requests a second can each implementation handle?
   * node: -n 10000, -c 1024-4096, ~700 reqs/sec
   * tornado: -n 10000, -c 1024-4096, ~700 reqs/sec
   * tornado-non: -n 10000, -c 1024-4096, ~650 reqs/sec
