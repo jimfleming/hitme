@@ -228,12 +228,15 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
   request_queue_size = 1024
   allow_reuse_address = True
 
-if __name__ == "__main__":
+def main():
   port = 8002
-  server = ThreadedHTTPServer(('localhost', 8002), Handler)
+  server = ThreadedHTTPServer(('localhost', port), Handler)
   print "app:listening:%d" % (port)
 
   try:
     server.serve_forever()
   except KeyboardInterrupt:
     print 'stopped.'
+
+if __name__ == "__main__":
+  main()

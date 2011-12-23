@@ -5,8 +5,6 @@ import os
 import tornado.ioloop, tornado.web
 import redis
 
-r = redis.StrictRedis(host='localhost', port=6379, db=0)
-
 def get_timestamp(my_date):
   return int(time.mktime(my_date.timetuple())) * 1000
 
@@ -21,6 +19,9 @@ def get_timestamps(now_timestamp):
   return get_timestamp(month_date), get_timestamp(week_date), get_timestamp(day_date), get_timestamp(hour_date), get_timestamp(minute_date)
 
 class HitsHandler(tornado.web.RequestHandler):
+  def initialize(self, redis_client):
+    self.redis_client = redis_client
+
   def get(self):
     timestamp = self.get_argument("timestamp", None)
 
@@ -32,7 +33,7 @@ class HitsHandler(tornado.web.RequestHandler):
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
-    pipe = r.pipeline()
+    pipe = self.redis_client.pipeline()
     pipe.multi()
     pipe.hgetall("hits:all")
     pipe.hgetall("hits:month:%s" % month_timestamp)
@@ -57,6 +58,9 @@ class HitsHandler(tornado.web.RequestHandler):
     self.flush()
  
 class HitHandler(tornado.web.RequestHandler):
+  def initialize(self, redis_client):
+    self.redis_client = redis_client
+
   def get(self):
     timestamp = self.get_argument("timestamp", None)
     url = self.get_argument("url", None)
@@ -75,7 +79,7 @@ class HitHandler(tornado.web.RequestHandler):
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
-    pipe = r.pipeline()
+    pipe = self.redis_client.pipeline()
     pipe.multi()
     pipe.hget("hits:all", url)
     pipe.hget("hits:month:%s" % month_timestamp, url)
@@ -118,7 +122,7 @@ class HitHandler(tornado.web.RequestHandler):
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
-    pipe = r.pipeline()
+    pipe = self.redis_client.pipeline()
     pipe.multi()
     pipe.hincrby("hits:all", url, 1)
     pipe.hincrby("hits:month:%s" % month_timestamp, url, 1)
@@ -132,16 +136,23 @@ class HitHandler(tornado.web.RequestHandler):
     self.write({ "status": "OK" })
     self.flush()
 
-application = tornado.web.Application([
-  (r"/hits", HitsHandler),
-  (r"/hit", HitHandler),
-  (r"/(.*)", tornado.web.StaticFileHandler, { "path": os.path.join(os.getcwd(), "public") }),
-])
- 
-if __name__ == "__main__":
+class Application(tornado.web.Application):
+  def __init__(self):
+    redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+
+    handlers = [
+      (r"/hits", HitsHandler, { "redis_client": redis_client }),
+      (r"/hit", HitHandler, { "redis_client": redis_client }),
+      (r"/(.*)", tornado.web.StaticFileHandler, { "path": os.path.join(os.getcwd(), "public") }),
+    ]
+
+    tornado.web.Application.__init__(self, handlers)
+
+def main():
   port = 8000
   print "app:listening:%d" % (port)
-  application.listen(port)
+  app = Application()
+  app.listen(port)
   io_loop = tornado.ioloop.IOLoop.instance()
   
   try:
@@ -149,3 +160,6 @@ if __name__ == "__main__":
   except KeyboardInterrupt:
     io_loop.stop()
     print 'stopped.'
+
+if __name__ == "__main__":
+  main()

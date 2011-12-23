@@ -5,9 +5,6 @@ import os
 import tornado.ioloop, tornado.web
 import brukva
 
-c = brukva.Client()
-c.connect()
-
 def get_timestamp(my_date):
   return int(time.mktime(my_date.timetuple())) * 1000
 
@@ -22,7 +19,7 @@ def get_timestamps(now_timestamp):
   return get_timestamp(month_date), get_timestamp(week_date), get_timestamp(day_date), get_timestamp(hour_date), get_timestamp(minute_date)
 
 class HitsHandler(tornado.web.RequestHandler):
-  def handle_get_replies(self, replies):
+  def get_callback(self, replies):
     all_time,last_month,last_week,last_day,last_hour,last_minute = replies[:]
 
     reply = {
@@ -35,6 +32,7 @@ class HitsHandler(tornado.web.RequestHandler):
       "last_minute": last_minute,
     }
 
+    self.redis_connection.disconnect()
     self.write(reply)
     self.finish()
 
@@ -51,7 +49,10 @@ class HitsHandler(tornado.web.RequestHandler):
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
-    pipe = c.pipeline(transactional=True)
+    self.redis_connection = brukva.Client()
+    self.redis_connection.connect()
+
+    pipe = self.redis_connection.pipeline(transactional=True)
     pipe.hgetall("hits:all")
     pipe.hgetall("hits:month:%s" % month_timestamp)
     pipe.hgetall("hits:week:%s" % week_timestamp)
@@ -59,10 +60,10 @@ class HitsHandler(tornado.web.RequestHandler):
     pipe.hgetall("hits:hour:%s" % hour_timestamp)
     pipe.hgetall("hits:minute:%s" % minute_timestamp)
 
-    pipe.execute(self.handle_get_replies)
- 
+    pipe.execute(self.get_callback)
+
 class HitHandler(tornado.web.RequestHandler):
-  def handle_get_replies(self, replies):
+  def get_callback(self, replies):
     all_time,last_month,last_week,last_day,last_hour,last_minute = replies[:]
 
     reply = {
@@ -76,11 +77,12 @@ class HitHandler(tornado.web.RequestHandler):
       "last_minute": last_minute or 0,
     }
 
+    self.redis_connection.disconnect()
     self.write(reply)
     self.finish()
 
-  def handle_post_replies(self, replies):
-    return
+  def post_callback(self, replies):
+    self.redis_connection.disconnect()
 
   # @brukva.adisp.process
   @tornado.web.asynchronous
@@ -90,7 +92,7 @@ class HitHandler(tornado.web.RequestHandler):
     
     if not url:
       self.set_status(400)
-      self.write({ "error": "Invalid URL" }) # TODO: update node version
+      self.write({ "error": "Invalid URL" })
       self.finish()
       return
 
@@ -102,7 +104,10 @@ class HitHandler(tornado.web.RequestHandler):
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
-    pipe = c.pipeline(transactional=True)
+    self.redis_connection = brukva.Client()
+    self.redis_connection.connect()
+
+    pipe = self.redis_connection.pipeline(transactional=True)
     pipe.hget("hits:all", url)
     pipe.hget("hits:month:%s" % month_timestamp, url)
     pipe.hget("hits:week:%s" % week_timestamp, url)
@@ -110,7 +115,7 @@ class HitHandler(tornado.web.RequestHandler):
     pipe.hget("hits:hour:%s" % hour_timestamp, url)
     pipe.hget("hits:minute:%s" % minute_timestamp, url)
 
-    pipe.execute(self.handle_get_replies)
+    pipe.execute(self.get_callback)
 
   # @brukva.adisp.process
   @tornado.web.asynchronous
@@ -120,7 +125,7 @@ class HitHandler(tornado.web.RequestHandler):
     
     if not url:
       self.set_status(400)
-      self.write({ "error": "Invalid URL" }) # TODO: update node version
+      self.write({ "error": "Invalid URL" })
       self.finish()
       return
 
@@ -132,30 +137,38 @@ class HitHandler(tornado.web.RequestHandler):
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
-    pipe = c.pipeline(transactional=True)
+    self.redis_connection = brukva.Client()
+    self.redis_connection.connect()
+
+    pipe = self.redis_connection.pipeline(transactional=True)
     pipe.hincrby("hits:all", url, 1)
     pipe.hincrby("hits:month:%s" % month_timestamp, url, 1)
     pipe.hincrby("hits:week:%s" % week_timestamp, url, 1)
     pipe.hincrby("hits:day:%s" % day_timestamp, url, 1)
     pipe.hincrby("hits:hour:%s" % hour_timestamp, url, 1)
     pipe.hincrby("hits:minute:%s" % minute_timestamp, url, 1)
-    pipe.execute(self.handle_post_replies)
+    pipe.execute(self.post_callback)
 
     # assuming everything went okay and not waiting on cb
     # self.set_status(200)
     self.write({ "status": "OK" })
     self.finish()
 
-application = tornado.web.Application([
-  (r"/hits", HitsHandler),
-  (r"/hit", HitHandler),
-  (r"/(.*)", tornado.web.StaticFileHandler, { "path": os.path.join(os.getcwd(), "public") }),
-])
- 
-if __name__ == "__main__":
+class Application(tornado.web.Application):
+  def __init__(self):
+    handlers = [
+      (r"/hits", HitsHandler),
+      (r"/hit", HitHandler),
+      (r"/(.*)", tornado.web.StaticFileHandler, { "path": os.path.join(os.getcwd(), "public") }),
+    ]
+
+    tornado.web.Application.__init__(self, handlers)
+
+def main():
   port = 8001
   print "app:listening:%d" % (port)
-  application.listen(port)
+  app = Application()
+  app.listen(port)
   io_loop = tornado.ioloop.IOLoop.instance()
   
   try:
@@ -163,3 +176,6 @@ if __name__ == "__main__":
   except KeyboardInterrupt:
     io_loop.stop()
     print 'stopped.'
+
+if __name__ == "__main__":
+  main()
