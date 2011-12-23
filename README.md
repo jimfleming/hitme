@@ -7,9 +7,9 @@ Simple Redis-backed hit counter implemented in python and node.js
 Endpoints
 ---------
 
-* GET /hit?url=__URL__&timestamp=__TIMESTAMP__ - get hits for a given url and timestamp (as ms since epoch)
-* GET /hits?timestamp=__TIMESTAMP__ - get all hits for a given timestamp (as ms since epoch)
-* POST /hit?url=__URL__&timestamp=__TIMESTAMP__ - record a hit for a given url and timestamp (as ms since epoch)
+* `GET /hit?url=__URL__&timestamp=__TIMESTAMP__` - get hits for a given url and timestamp (as ms since epoch)
+* `GET /hits?timestamp=__TIMESTAMP__` - get all hits for a given timestamp (as ms since epoch)
+* `POST /hit?url=__URL__&timestamp=__TIMESTAMP__` - record a hit for a given url and timestamp (as ms since epoch)
 
 
 Examples
@@ -32,7 +32,8 @@ Installation
 ------------
 
 * hitme-node
-  * sudo npm install
+  * `sudo npm install`
+  * `sudo node app.js`
 * hitme-python-threaded
 * hitme-tornado-non
 * hitme-tornado
@@ -40,4 +41,5 @@ Installation
 
 Benchmarking
 ------------
+
 ab -n 100000 -c 1024 -p ab_data0 -T "application/x-www-form-urlencoded" http://localhost/hit
