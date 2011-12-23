@@ -1,6 +1,6 @@
 (function() {
 
-  var $graph, $message, arc, chart, color, w, h, r, pie, render_graph;
+  var $graph, $message, arc, chart, color, w, h, r, pie, render_graph, key;
 
   $message = $(document.getElementById('message'));
   $graph = $(document.getElementById('graph'));
@@ -22,6 +22,10 @@
     .attr('height', h)
     .append('g')
     .attr('transform', "translate(" + r + "," + r + ")");
+
+  key = d3.select('#graph')
+    .append('ul')
+    .attr('class', 'key');
 
   d3.json('/hits', function(data) {
     var $links, data_range;
@@ -47,7 +51,7 @@
   });
 
   render_graph = function(data) {
-    var paths;
+    var paths, keys;
 
     data = _.map(data, function(hits, url) {
       return { hits: hits, url: url };
@@ -65,13 +69,25 @@
     paths = chart.selectAll('path')
       .data(pie(data));
 
+    keys = key.selectAll('li')
+      .data(data);
+
     paths.enter().append('path').attr('fill', function(d, i) {
       return color(i);
     }).attr('d', arc).each(function(d) {
       return this._current = d;
     });
 
+    keys.enter().append('li');
+      
+    keys.text(function(d) {
+      return d.url + ' - ' + d.hits;
+    }).style('color', function(d, i) {
+      return color(i);
+    });
+
     paths.exit().remove();
+    keys.exit().remove();
 
     paths.transition().ease('bounce').duration(1000).attrTween('d', function(b) {
       var i;
