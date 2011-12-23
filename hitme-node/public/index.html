@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <title>Hitme</title>
+
+    <link href="/styles/styles.css" rel="stylesheet">
+
+</head>
+<body>
+
+  <header>
+    <h1>hit.me</h1>
+
+    <nav>
+      <menu class="times">
+        <li>
+          <a href="#" data-range="all_time">All Time</a>
+        </li>
+        <li>
+          <a href="#" data-range="last_month">Last Month</a>
+        </li>
+        <li>
+          <a href="#" data-range="last_week">Last Week</a>
+        </li>
+        <li>
+          <a href="#" data-range="last_day">Last Day</a>
+        </li>
+        <li>
+          <a href="#" data-range="last_hour">Last Hour</a>
+        </li>
+        <li>
+          <a href="#" data-range="last_minute">Last Minute</a>
+        </li>
+      </menu>
+    </nav>
+  </header>
+  
+  <section class="graphs">
+    <div id="circle"></div>
+  </section>
+
+  <script src="/scripts/deps/jquery.js"></script>
+  <script src="/scripts/deps/underscore.js"></script>
+  <script src="/scripts/deps/underscore.js"></script>
+
+  <script src="/scripts/deps/d3/d3.js"></script>
+  <script src="/scripts/deps/d3/d3.chart.js"></script>
+  <script src="/scripts/deps/d3/d3.csv.js"></script>
+  <script src="/scripts/deps/d3/d3.geo.js"></script>
+  <script src="/scripts/deps/d3/d3.geom.js"></script>
+  <script src="/scripts/deps/d3/d3.layout.js"></script>
+  <script src="/scripts/deps/d3/d3.time.js"></script>
+
+  <script src="/scripts/main.js"></script>
+
+</body>
+</html>

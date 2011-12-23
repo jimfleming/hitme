@@ -1,0 +1,25 @@
+{
+  "name": "hitme",
+  "description": "Scaleable redis-backed hit counter",
+  "version": "0.0.1",
+  "author": "Jim Fleming <jimmy.fleming@gmail.com> (http://jimfleming.me)",
+  "private": true,
+  "main": "app",
+  "scripts": {
+    "start": "coffee index.coffee"
+  },
+  "directories": {
+    "lib": "./lib"
+  },
+  "dependencies": {
+    "coffee-script": "*",
+    "less": "*",
+    "express": "*",
+    "underscore": "*",
+    "hiredis": "*",
+    "redis": "*"
+  },
+  "engines": {
+    "node": ">=0.4.7 <=0.6.3"
+  }
+}
