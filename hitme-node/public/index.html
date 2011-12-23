@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Hitme</title>
 
+    <link href='http://fonts.googleapis.com/css?family=Nunito:700,400' rel='stylesheet' type='text/css'>
     <link href="/styles/styles.css" rel="stylesheet">
 
 </head>
@@ -38,8 +39,13 @@
   </header>
   
   <section class="graphs">
-    <div id="circle"></div>
+    <div id="message" class="inner"><span id="ohno">Oh Noes!</span><span id="nodata">You have no data.</span></div>
+    <div id="graph" class="inner"><div id="circle"></div></div>
   </section>
+  
+  <footer>
+    <p>Jim Fleming</p>
+  </footer>
 
   <script src="/scripts/deps/jquery.js"></script>
   <script src="/scripts/deps/underscore.js"></script>
