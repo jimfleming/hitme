@@ -56,6 +56,9 @@ Results
 -------
 
 * How many concurrent connections does each server need before it starts dropping requests?
+  * node: -n 10000 -c > 8192
+  * tornado: -n 10000 -c > 8192
+  * tornado-non: -n 10000 -c > 256
 * How many requests a second can each implementation handle? (1 visitor / many)
 
 

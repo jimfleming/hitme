@@ -45,9 +45,11 @@ class ThreadingPoolMixIn(ThreadingMixIn):
     if self.verify_request(request, client_address):
       self.requests.put((request, client_address))
 
+# convert a python date to milliseconds since epoch
 def get_timestamp(my_date):
   return int(time.mktime(my_date.timetuple())) * 1000
 
+# get timestamps for each timespan from `now_timestamp`
 def get_timestamps(now_timestamp):
   now_date = datetime.datetime.fromtimestamp(now_timestamp)
   month_date = datetime.datetime(now_date.year, now_date.month, 1)
@@ -58,11 +60,14 @@ def get_timestamps(now_timestamp):
   minute_date = datetime.datetime(now_date.year, now_date.month, now_date.day, now_date.hour, now_date.minute)
   return get_timestamp(month_date), get_timestamp(week_date), get_timestamp(day_date), get_timestamp(hour_date), get_timestamp(minute_date)
 
+# json helper for lists and dicts
 def to_json(obj):
   return json.dumps(obj, separators=(',',':'))
 
+# request handler
 class Handler(BaseHTTPRequestHandler):
 
+  # request helper for error output
   def handle_err(self, reply, code=500):
     try:
       self.send_response(code)
@@ -73,6 +78,7 @@ class Handler(BaseHTTPRequestHandler):
     except socket.error:
       print 'socket.error!'
 
+  # request helper for json output
   def handle_json(self, reply):
     try:
       self.send_response(200)
@@ -84,6 +90,8 @@ class Handler(BaseHTTPRequestHandler):
       print 'socket.error!'
 
   def handle_hits_get(self, query):
+    timestamp = None
+
     if query.has_key('timestamp'):
       timestamp = query["timestamp"][0] # trim trailing \n
       timestamp = math.floor(int(timestamp) / 1000)
@@ -119,6 +127,8 @@ class Handler(BaseHTTPRequestHandler):
     self.handle_json(reply)
 
   def handle_hit_get(self, query):
+    timestamp = None
+
     if query.has_key('timestamp'):
       timestamp = query["timestamp"][0] # trim trailing \n
       timestamp = math.floor(int(timestamp) / 1000)
@@ -161,6 +171,8 @@ class Handler(BaseHTTPRequestHandler):
     self.handle_json(reply)
 
   def handle_hit_post(self, body):
+    timestamp = None
+
     if body.has_key('timestamp'):
       timestamp = body["timestamp"] # trim trailing \n
       timestamp = math.floor(int(timestamp) / 1000)
@@ -191,34 +203,43 @@ class Handler(BaseHTTPRequestHandler):
     self.handle_json({ "status": "OK" })
   
   def do_GET(self):
+    # parse the url for path (used in routing) and querystring
     parsed_path = urlparse.urlparse(self.path)
     path = parsed_path.path
+
+    # parse querystring into dict
     query = urlparse.parse_qs(parsed_path.query)
 
-    print threading.currentThread().getName(), 'GET', path
+    # print threading.currentThread().getName(), 'GET', path
 
+    # handle route for `/hits`
     if path == "/hits":
       self.handle_hits_get(query)
+    # handle route for `/hit`
     elif path == "/hit":
       self.handle_hit_get(query)
 
   def do_POST(self):
+    # parse the url for path (used in routing)
     parsed_path = urlparse.urlparse(self.path)
     path = parsed_path.path
 
-    print threading.currentThread().getName(), 'POST', path
+    # print threading.currentThread().getName(), 'POST', path
 
+    # parse post form data
     form = cgi.FieldStorage(fp=self.rfile, headers=self.headers, environ={
       'REQUEST_METHOD':'POST',
       'CONTENT_TYPE':self.headers['Content-Type'],
     })
 
+    # build post body dict
     body = {}
 
     for field_name in form.keys():
       field = form[field_name]
       body[field_name] = field.value
 
+    # handle route for `/hit`
     if path == "/hit":
       self.handle_hit_post(body)
 
