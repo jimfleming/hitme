@@ -49,7 +49,7 @@ Installation
 Benchmarking
 ------------
 
-`ab -n 100000 -c 1024 -p ab_data0 -T "application/x-www-form-urlencoded" http://localhost/hit`
+`ab -r -n 100000 -c 5000 -p ab_data0 -T "application/x-www-form-urlencoded" http://localhost/hit`
 
 
 Results
@@ -57,6 +57,12 @@ Results
 
 * How many concurrent connections does each server need before it starts dropping requests?
 * How many requests a second can each implementation handle? (1 visitor / many)
+
+
+Graph
+-----
+
+![Graph](https://github.com/jimfleming/hitme/raw/master/graph.png)
 
 
 Sample Outputs
