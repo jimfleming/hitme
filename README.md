@@ -7,11 +7,12 @@ Simple Redis-backed hit counter implemented in python and node.js
 Endpoints
 ---------
 
-* `GET /hit?url=__URL__&timestamp=__TIMESTAMP__` - get hits for a given url and timestamp (as ms since epoch)
-* `GET /hits?timestamp=__TIMESTAMP__` - get all hits for a given timestamp (as ms since epoch)
-* `POST /hit?url=__URL__&timestamp=__TIMESTAMP__` - record a hit for a given url and timestamp (as ms since epoch)
+* `GET /hit?url=URL&timestamp=TIMESTAMP` - get hits for a given url and timestamp (as ms since epoch)
+* `GET /hits?timestamp=TIMESTAMP` - get all hits for a given timestamp (as ms since epoch)
+* `POST /hit?url=URL&timestamp=TIMESTAMP` - record a hit for a given url and timestamp (as ms since epoch)
 
 * /index.html - view graphs comparing site traffic for given intervals
+
 
 Examples
 --------
