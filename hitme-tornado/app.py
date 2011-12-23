@@ -5,9 +5,11 @@ import os
 import tornado.ioloop, tornado.web
 import redis
 
+# convert a python date to milliseconds since epoch
 def get_timestamp(my_date):
   return int(time.mktime(my_date.timetuple())) * 1000
 
+# get timestamps for each timespan from `now_timestamp`
 def get_timestamps(now_timestamp):
   now_date = datetime.datetime.fromtimestamp(now_timestamp)
   month_date = datetime.datetime(now_date.year, now_date.month, 1)
@@ -18,11 +20,15 @@ def get_timestamps(now_timestamp):
   minute_date = datetime.datetime(now_date.year, now_date.month, now_date.day, now_date.hour, now_date.minute)
   return get_timestamp(month_date), get_timestamp(week_date), get_timestamp(day_date), get_timestamp(hour_date), get_timestamp(minute_date)
 
+# `GET /hits` handler returns hits for all urls for a given `timestamp`
 class HitsHandler(tornado.web.RequestHandler):
+  # setup the redis client from the main application
   def initialize(self, redis_client):
     self.redis_client = redis_client
 
+  # handles `GET /hits`
   def get(self):
+    # get and normalize the timestamp query param
     timestamp = self.get_argument("timestamp", None)
 
     if timestamp and timestamp != "0":
@@ -30,9 +36,11 @@ class HitsHandler(tornado.web.RequestHandler):
     else:
       timestamp = int(time.time())
 
+    # get timestamps for each range
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
+    # use redis MULTI/EXEC to batch commands
     pipe = self.redis_client.pipeline()
     pipe.multi()
     pipe.hgetall("hits:all")
@@ -42,8 +50,10 @@ class HitsHandler(tornado.web.RequestHandler):
     pipe.hgetall("hits:hour:%s" % hour_timestamp)
     pipe.hgetall("hits:minute:%s" % minute_timestamp)
 
+    # EXEC the multi-queue and destructure its reply
     all_time,last_month,last_week,last_day,last_hour,last_minute = pipe.execute()[:]
 
+    # build a reply
     reply = {
       "status": 'OK',
       "all_time": all_time,
@@ -57,12 +67,14 @@ class HitsHandler(tornado.web.RequestHandler):
     self.write(reply)
     self.flush()
  
+# `GET|POST /hit` handler
 class HitHandler(tornado.web.RequestHandler):
+  # setup the redis client from the main application
   def initialize(self, redis_client):
     self.redis_client = redis_client
 
   def get(self):
-    timestamp = self.get_argument("timestamp", None)
+    # get and require the url query param
     url = self.get_argument("url", None)
     
     if not url:
@@ -71,14 +83,19 @@ class HitHandler(tornado.web.RequestHandler):
       self.flush()
       return
 
+    # get and normalize the timestamp query param
+    timestamp = self.get_argument("timestamp", None)
+
     if timestamp and timestamp != "0":
       timestamp = math.floor(int(timestamp) / 1000)
     else:
       timestamp = int(time.time())
 
+    # get timestamps for each range
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
+    # use redis MULTI/EXEC to batch commands
     pipe = self.redis_client.pipeline()
     pipe.multi()
     pipe.hget("hits:all", url)
@@ -88,8 +105,10 @@ class HitHandler(tornado.web.RequestHandler):
     pipe.hget("hits:hour:%s" % hour_timestamp, url)
     pipe.hget("hits:minute:%s" % minute_timestamp, url)
 
+    # EXEC the multi-queue and destructure its reply
     all_time,last_month,last_week,last_day,last_hour,last_minute = pipe.execute()[:]
 
+    # build a reply
     reply = {
       "status": 'OK',
       "url": url,
@@ -105,7 +124,7 @@ class HitHandler(tornado.web.RequestHandler):
     self.flush()
 
   def post(self):
-    timestamp = self.get_argument("timestamp", None)
+    # get and require the url query param
     url = self.get_argument("url", None)
     
     if not url:
@@ -114,14 +133,19 @@ class HitHandler(tornado.web.RequestHandler):
       self.flush()
       return
 
+    # get and normalize the timestamp query param
+    timestamp = self.get_argument("timestamp", None)
+
     if timestamp and timestamp != "0":
       timestamp = math.floor(int(timestamp) / 1000)
     else:
       timestamp = int(time.time())
 
+    # get timestamps for each range
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
+    # use redis MULTI/EXEC to batch commands
     pipe = self.redis_client.pipeline()
     pipe.multi()
     pipe.hincrby("hits:all", url, 1)
@@ -130,12 +154,14 @@ class HitHandler(tornado.web.RequestHandler):
     pipe.hincrby("hits:day:%s" % day_timestamp, url, 1)
     pipe.hincrby("hits:hour:%s" % hour_timestamp, url, 1)
     pipe.hincrby("hits:minute:%s" % minute_timestamp, url, 1)
+    # EXEC the multi-queue but discard its reply
     pipe.execute()
 
     # self.set_status(200)
     self.write({ "status": "OK" })
     self.flush()
 
+# initializes a tornado web application and its routes
 class Application(tornado.web.Application):
   def __init__(self):
     redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
@@ -148,13 +174,17 @@ class Application(tornado.web.Application):
 
     tornado.web.Application.__init__(self, handlers)
 
+# main wrapper
 def main():
   port = 8000
   print "app:listening:%d" % (port)
+
+  # create the tornado application
   app = Application()
   app.listen(port)
-  io_loop = tornado.ioloop.IOLoop.instance()
+  io_loop = tornado.ioloop.IOLoop.instance() # start the tornado event loop
   
+  # terminate without error messages
   try:
     io_loop.start()
   except KeyboardInterrupt:

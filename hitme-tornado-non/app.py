@@ -5,9 +5,11 @@ import os
 import tornado.ioloop, tornado.web
 import brukva
 
+# convert a python date to milliseconds since epoch
 def get_timestamp(my_date):
   return int(time.mktime(my_date.timetuple())) * 1000
 
+# get timestamps for each timespan from `now_timestamp`
 def get_timestamps(now_timestamp):
   now_date = datetime.datetime.fromtimestamp(now_timestamp)
   month_date = datetime.datetime(now_date.year, now_date.month, 1)
@@ -18,10 +20,13 @@ def get_timestamps(now_timestamp):
   minute_date = datetime.datetime(now_date.year, now_date.month, now_date.day, now_date.hour, now_date.minute)
   return get_timestamp(month_date), get_timestamp(week_date), get_timestamp(day_date), get_timestamp(hour_date), get_timestamp(minute_date)
 
+# `GET /hits` handler returns hits for all urls for a given `timestamp`
 class HitsHandler(tornado.web.RequestHandler):
+  # callback for `GET /hits` after redis is done
   def get_callback(self, replies):
     all_time,last_month,last_week,last_day,last_hour,last_minute = replies[:]
 
+    # build the reply
     reply = {
       "status": 'OK',
       "all_time": all_time,
@@ -32,13 +37,15 @@ class HitsHandler(tornado.web.RequestHandler):
       "last_minute": last_minute,
     }
 
-    self.redis_connection.disconnect()
+    self.redis_connection.disconnect() # redis is done, disconnect
     self.write(reply)
-    self.finish()
+    self.finish() # tell the server to cleanup 
 
+  # handles `GET /hits`
   # @brukva.adisp.process
   @tornado.web.asynchronous
   def get(self):
+    # get and normalize the timestamp query param
     timestamp = self.get_argument("timestamp", None)
 
     if timestamp and timestamp != "0":
@@ -46,12 +53,15 @@ class HitsHandler(tornado.web.RequestHandler):
     else:
       timestamp = int(time.time())
 
+    # get timestamps for each range
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
+    # create a new redis connection
     self.redis_connection = brukva.Client()
     self.redis_connection.connect()
 
+    # use redis MULTI/EXEC to batch commands
     pipe = self.redis_connection.pipeline(transactional=True)
     pipe.hgetall("hits:all")
     pipe.hgetall("hits:month:%s" % month_timestamp)
@@ -60,12 +70,16 @@ class HitsHandler(tornado.web.RequestHandler):
     pipe.hgetall("hits:hour:%s" % hour_timestamp)
     pipe.hgetall("hits:minute:%s" % minute_timestamp)
 
+    # EXEC the multi-queue and pass it off to `get_callback`
     pipe.execute(self.get_callback)
 
+# `GET|POST /hit` handler
 class HitHandler(tornado.web.RequestHandler):
+  # callback for `GET /hit` after redis is done
   def get_callback(self, replies):
     all_time,last_month,last_week,last_day,last_hour,last_minute = replies[:]
 
+    # build the reply
     reply = {
       "status": 'OK',
       "url": url,
@@ -77,17 +91,19 @@ class HitHandler(tornado.web.RequestHandler):
       "last_minute": last_minute or 0,
     }
 
-    self.redis_connection.disconnect()
+    self.redis_connection.disconnect() # redis is done, disconnect
     self.write(reply)
-    self.finish()
+    self.finish() # tell the server to cleanup 
 
+  # callback for `POST /hit` after redis is done
   def post_callback(self, replies):
-    self.redis_connection.disconnect()
+    self.redis_connection.disconnect() # redis is done, disconnect
 
+  # handles `GET /hit` to return values for a given url and timestamp
   # @brukva.adisp.process
   @tornado.web.asynchronous
   def get(self):
-    timestamp = self.get_argument("timestamp", None)
+    # get and require the url query param
     url = self.get_argument("url", None)
     
     if not url:
@@ -96,17 +112,23 @@ class HitHandler(tornado.web.RequestHandler):
       self.finish()
       return
 
+    # get and normalize the timestamp query param
+    timestamp = self.get_argument("timestamp", None)
+
     if timestamp and timestamp != "0":
       timestamp = math.floor(int(timestamp) / 1000)
     else:
       timestamp = int(time.time())
 
+    # get timestamps for each range
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
+    # create a new redis connection
     self.redis_connection = brukva.Client()
     self.redis_connection.connect()
 
+    # use redis MULTI/EXEC to batch commands
     pipe = self.redis_connection.pipeline(transactional=True)
     pipe.hget("hits:all", url)
     pipe.hget("hits:month:%s" % month_timestamp, url)
@@ -115,12 +137,14 @@ class HitHandler(tornado.web.RequestHandler):
     pipe.hget("hits:hour:%s" % hour_timestamp, url)
     pipe.hget("hits:minute:%s" % minute_timestamp, url)
 
+    # EXEC the multi-queue and pass it off to `get_callback`
     pipe.execute(self.get_callback)
 
+  # handles `POST /hit` to increment counters for the timestamp and url
   # @brukva.adisp.process
   @tornado.web.asynchronous
   def post(self):
-    timestamp = self.get_argument("timestamp", None)
+    # get and require the url query param
     url = self.get_argument("url", None)
     
     if not url:
@@ -129,17 +153,23 @@ class HitHandler(tornado.web.RequestHandler):
       self.finish()
       return
 
+    # get and normalize the timestamp query param
+    timestamp = self.get_argument("timestamp", None)
+
     if timestamp and timestamp != "0":
       timestamp = math.floor(int(timestamp) / 1000)
     else:
       timestamp = int(time.time())
 
+    # get timestamps for each range
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
+    # create a new redis connection
     self.redis_connection = brukva.Client()
     self.redis_connection.connect()
 
+    # use redis MULTI/EXEC to batch commands
     pipe = self.redis_connection.pipeline(transactional=True)
     pipe.hincrby("hits:all", url, 1)
     pipe.hincrby("hits:month:%s" % month_timestamp, url, 1)
@@ -149,28 +179,33 @@ class HitHandler(tornado.web.RequestHandler):
     pipe.hincrby("hits:minute:%s" % minute_timestamp, url, 1)
     pipe.execute(self.post_callback)
 
-    # assuming everything went okay and not waiting on cb
+    # assuming everything went okay and not waiting on callback to send reply
     # self.set_status(200)
     self.write({ "status": "OK" })
     self.finish()
 
+# initializes a tornado web application and its routes
 class Application(tornado.web.Application):
   def __init__(self):
     handlers = [
       (r"/hits", HitsHandler),
       (r"/hit", HitHandler),
-      (r"/(.*)", tornado.web.StaticFileHandler, { "path": os.path.join(os.getcwd(), "public") }),
+      (r"/(.*)", tornado.web.StaticFileHandler, { "path": os.path.join(os.getcwd(), "public") }), # configure static file handler
     ]
 
     tornado.web.Application.__init__(self, handlers)
 
+# main wrapper
 def main():
   port = 8001
   print "app:listening:%d" % (port)
+
+  # create the tornado application
   app = Application()
   app.listen(port)
-  io_loop = tornado.ioloop.IOLoop.instance()
+  io_loop = tornado.ioloop.IOLoop.instance() # start the tornado event loop
   
+  # terminate without error messages
   try:
     io_loop.start()
   except KeyboardInterrupt:
