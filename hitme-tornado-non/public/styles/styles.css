@@ -1,0 +1,160 @@
+body {
+  font-size: 14px;
+  font-family: Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: rgba(173, 186, 204, 0.1);
+}
+
+h1 {
+  font-weight: 700; 
+  color: #507282;
+  font-family: 'Nunito', sans-serif;
+  font-size: 90px;
+  text-align: center;
+  margin: 0 0 20px;
+  text-shadow: 0 1px rgba(255, 255, 255, 0.4);
+}
+
+menu.times {
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  width: 792px;
+  margin: 0 auto;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 12px;
+  border: 1px solid #adbacc;
+  font-weight: bold;
+  background: #cedae5;
+  background-image: -webkit-gradient(linear, left top, left bottom, from(#cedae5), to(#adbacc));
+  background-image: -moz-linear-gradient(top, #cedae5, #adbacc);
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1), inset 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+menu.times li {
+  float: left;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+menu.times li:first-child {
+  border-left: none;
+}
+
+menu.times li:last-child {
+  border-right: none;
+}
+
+menu.times li a {
+  display: block;
+  padding: 8px 15px;
+  width: 100px;
+  color: #fff;
+  text-decoration: none;
+  text-shadow: 0 -1px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+menu.times li a:hover {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+menu.times li a:active,
+menu.times li a.active {
+  width: 98px;
+  border-left: 1px solid #99a6b8;
+  border-right: 1px solid #99a6b8;
+  background: rgba(0, 0, 0, 0.05);
+  background-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 0.05)), to(rgba(0, 0, 0, 0.1)));
+  background-image: -moz-linear-gradient(top, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1));
+}
+
+.graphs {
+  background: #fff;
+  width: 792px;
+  margin: 0 auto;
+  border: 1px solid #adbacc;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.graphs #circle {
+  float: left;
+  width: 400px;
+  height: 400px;
+}
+
+.graphs ul.key {
+  width: 272px;
+  list-style: none;
+  margin: 20px 0 0 40px; padding: 0;
+  float: right;
+  font-size: 16px;
+  font-weight: bold;
+  font-family: 'Nunito', sans-serif;
+}
+
+.graphs ul.key > li {
+  margin: 0 0 10px;
+  word-wrap: break-word;
+}
+
+.graphs > .inner {
+  padding: 0 40px ;
+  height: 0;
+  overflow: hidden; 
+  opacity: 0;
+  -webkit-transition: opacity 1s ease-out;
+  -moz-transition: opacity 1s ease-out; 
+  -ms-transition: opacity 1s ease-out;  
+  -o-transition: opacity 1s ease-out;  
+  transition: opacity 1s ease-out;   
+}
+
+.graphs > .active {
+  opacity: 1.0;
+  height: 480px;  
+}
+
+.graphs > #graph.active {
+  padding: 40px;
+  height: 400px;  
+}
+
+#message {
+  font-family: 'Nunito', sans-serif;
+  background: #fafafa url(/images/ohnoes.png) left bottom no-repeat;
+  text-transform: lowercase;
+}
+
+#ohno {
+  font-weight: 700; 
+  color: #0A3542;
+  display: block;
+  font-size: 140px;
+  line-height: 110px;
+  padding-left: 10px;
+  margin-top: 20px;
+}
+
+#nodata {
+  font-weight: 400; 
+  color: #507282;
+  display: block;
+  text-align: right;
+  font-size: 60px;
+  padding-right: 10px;
+}
+
+footer {
+  width: 792px;
+  margin: 0 auto;
+  text-align: right;
+  color: #999;
+  text-shadow: 0 1px rgba(255, 255, 255, 0.8);
+}

@@ -11,6 +11,7 @@ Endpoints
 * `GET /hits?timestamp=__TIMESTAMP__` - get all hits for a given timestamp (as ms since epoch)
 * `POST /hit?url=__URL__&timestamp=__TIMESTAMP__` - record a hit for a given url and timestamp (as ms since epoch)
 
+* /index.html - view graphs comparing site traffic for given intervals
 
 Examples
 --------
