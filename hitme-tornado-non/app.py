@@ -22,7 +22,12 @@ def get_timestamps(now_timestamp):
 
 # `GET /hits` handler returns hits for all urls for a given `timestamp`
 class HitsHandler(tornado.web.RequestHandler):
+  # setup the redis connection from the main application
+  def initialize(self, redis_connection):
+    self.redis_connection = redis_connection
+
   # callback for `GET /hits` after redis is done
+  # @brukva.adisp.process
   def get_callback(self, replies):
     all_time,last_month,last_week,last_day,last_hour,last_minute = replies[:]
 
@@ -57,10 +62,6 @@ class HitsHandler(tornado.web.RequestHandler):
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
-    # create a new redis connection
-    self.redis_connection = brukva.Client()
-    self.redis_connection.connect()
-
     # use redis MULTI/EXEC to batch commands
     pipe = self.redis_connection.pipeline(transactional=True)
     pipe.hgetall("hits:all")
@@ -75,7 +76,12 @@ class HitsHandler(tornado.web.RequestHandler):
 
 # `GET|POST /hit` handler
 class HitHandler(tornado.web.RequestHandler):
+  # setup the redis connection from the main application
+  def initialize(self, redis_connection):
+    self.redis_connection = redis_connection
+
   # callback for `GET /hit` after redis is done
+  # @brukva.adisp.process
   def get_callback(self, replies):
     all_time,last_month,last_week,last_day,last_hour,last_minute = replies[:]
 
@@ -96,6 +102,7 @@ class HitHandler(tornado.web.RequestHandler):
     self.finish() # tell the server to cleanup 
 
   # callback for `POST /hit` after redis is done
+  # @brukva.adisp.process
   def post_callback(self, replies):
     self.redis_connection.disconnect() # redis is done, disconnect
 
@@ -123,10 +130,6 @@ class HitHandler(tornado.web.RequestHandler):
     # get timestamps for each range
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
-
-    # create a new redis connection
-    self.redis_connection = brukva.Client()
-    self.redis_connection.connect()
 
     # use redis MULTI/EXEC to batch commands
     pipe = self.redis_connection.pipeline(transactional=True)
@@ -165,10 +168,6 @@ class HitHandler(tornado.web.RequestHandler):
     timestamps = get_timestamps(timestamp)
     month_timestamp,week_timestamp,day_timestamp,hour_timestamp,minute_timestamp = timestamps[:]
 
-    # create a new redis connection
-    self.redis_connection = brukva.Client()
-    self.redis_connection.connect()
-
     # use redis MULTI/EXEC to batch commands
     pipe = self.redis_connection.pipeline(transactional=True)
     pipe.hincrby("hits:all", url, 1)
@@ -187,9 +186,13 @@ class HitHandler(tornado.web.RequestHandler):
 # initializes a tornado web application and its routes
 class Application(tornado.web.Application):
   def __init__(self):
+    # create a new redis connection
+    redis_connection = brukva.Client()
+    redis_connection.connect()
+
     handlers = [
-      (r"/hits", HitsHandler),
-      (r"/hit", HitHandler),
+      (r"/hits", HitsHandler, { "redis_connection": redis_connection }),
+      (r"/hit", HitHandler, { "redis_connection": redis_connection }),
       (r"/(.*)", tornado.web.StaticFileHandler, { "path": os.path.join(os.getcwd(), "public") }), # configure static file handler
     ]
 
